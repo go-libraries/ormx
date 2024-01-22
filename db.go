@@ -13,8 +13,12 @@ func NewDbSplit(cfg MysqlConfig) *DbSplit {
 	sp := &DbSplit{
 		readObj:  db,
 		writeObj: db,
-		logger:   NewLog(cfg.LogLevel),
 	}
+	dbLog := db.Config.Logger
+	if dbLog != nil {
+		sp.logger = dbLog.(*GormLogger)
+	}
+
 	if cfg.DataSourceRead != "" {
 		sp.readObj = newConnectWithMysql(cfg.DataSourceRead, cfg)
 	}
@@ -23,7 +27,7 @@ func NewDbSplit(cfg MysqlConfig) *DbSplit {
 
 func newConnectWithMysql(dsn string, cfg MysqlConfig) *gorm.DB {
 	db, err := gorm.Open(driver.Open(dsn), &gorm.Config{
-		Logger: NewLog(LogLevel),
+		Logger: NewLog(cfg.LogLevel),
 	})
 	if err != nil {
 		panic("can't connect to mysql" + err.Error())
